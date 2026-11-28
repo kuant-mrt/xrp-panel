@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XRP Masa">
+<meta name="theme-color" content="#120607">
+<title>XRP // makro rejim masası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* İşlem masası görünümü: koyu bordo zemin, çerçeveli paneller, mono yazı, somon/yeşil/amber vurgular.
+   Her rakam gerçek veriden gelir: canlı fiyat (Kraken/Binance/CoinGecko/Coinbase) + gece görevinin veri.json'u. */
+:root{color-scheme:dark;--bg:#120607;--pn:#1b0a0c;--pn2:#220e0f;--ln:#3e1a17;--ln2:#5e2a22;--tx:#f6e7e2;--sf:#b8978f;--dim:#7c5f58;
+--acc:#ff6a48;--grn:#3ee08f;--red:#ff5468;--amb:#f6b73c;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:12px/1.45 var(--mono);overflow-x:clip}
+body{background:radial-gradient(900px 500px at 50% -120px,#3a110f 0%,transparent 70%),var(--bg);min-height:100vh}
+.wrap{max-width:1480px;margin:0 auto;padding:10px}
+.pos{color:var(--grn)}.neg{color:var(--red)}.amb{color:var(--amb)}.acc{color:var(--acc)}.sf{color:var(--sf)}.dim{color:var(--dim)}
+.ust{display:flex;gap:14px;align-items:center;padding:6px 4px 10px;flex-wrap:wrap}
+.logo{width:54px;height:54px;border-radius:12px;background:linear-gradient(145deg,#3b1410,#1a0808);border:1px solid var(--ln2);display:grid;place-items:center;box-shadow:0 0 24px #ff6a4822 inset}
+.bas{flex:1 1 360px}
+.ustyazi{font-size:10px;letter-spacing:.14em;color:var(--sf);text-transform:uppercase}
+.ustyazi b{color:var(--acc)}
+h1{margin:2px 0 2px;font:800 clamp(20px,3vw,30px)/1.1 var(--mono);color:var(--acc);letter-spacing:.02em;text-shadow:0 0 18px #ff6a4840}
+h1 span{color:var(--tx)}
+.altyazi{font-size:10.5px;color:var(--dim)}
+.ustist{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.ustist div{text-align:right}
+.ustist small{display:block;font-size:9.5px;letter-spacing:.14em;color:var(--sf)}
+.ustist b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.saat b{font-size:24px;font-weight:800;color:var(--tx)}
+.saat small{letter-spacing:.06em}
+.akis{display:flex;align-items:center;border:1px solid var(--ln);border-radius:6px;background:#160809;overflow:hidden;margin-bottom:10px}
+.pill{flex:none;background:var(--red);color:#fff;font-weight:700;font-size:10.5px;letter-spacing:.08em;padding:5px 10px;border-radius:5px;margin:3px}
+.pill::before{content:"● "}
+.kay{overflow:hidden;white-space:nowrap;flex:1;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.yol{display:inline-block;padding-left:12px;animation:kay 70s linear infinite;color:var(--sf);font-size:11px}
+.yol i{font-style:normal;color:var(--dim);margin:0 10px}
+@keyframes kay{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.yol{animation:none}}
+.izgara{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px}
+.pn{background:linear-gradient(180deg,var(--pn2),var(--pn));border:1px solid var(--ln);border-radius:8px;padding:10px 12px 12px;position:relative;display:flex;flex-direction:column}
+.pn>h3{margin:0 0 8px;font:700 10.5px/1.2 var(--mono);letter-spacing:.13em;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pn>h3::before{content:"◆";color:var(--acc);margin-right:-1px}
+.pn>h3 em{font-style:normal;margin-right:auto}
+.pn>h3>span{color:var(--sf);font-weight:500;letter-spacing:.06em;white-space:nowrap}
+.etiket{border:1px solid var(--grn);color:var(--grn)!important;border-radius:4px;padding:1px 6px;font-size:9.5px;letter-spacing:.1em}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}.c12{grid-column:1/-1}
+.oz{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,1.3fr);gap:18px;align-items:start}
+.oz .buyuk{font-size:clamp(24px,2.6vw,32px)}
+.pbar2{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,#ff546855,#ff546822 47%,#3ee08f22 47%,#3ee08f55);margin:10px 0 4px}
+.pbar2 i{position:absolute;top:-4px;width:3px;height:18px;border-radius:2px;background:#fff;box-shadow:0 0 8px #fff}
+.pbar2 b{position:absolute;top:-3px;left:47%;width:1px;height:16px;background:var(--acc)}
+.neden{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:6px}
+.neden li{border-left:3px solid var(--sf);padding:3px 0 3px 9px;font-size:11.5px}
+.neden li.y{border-color:var(--grn)}.neden li.k{border-color:var(--red)}
+.neden small{display:block;color:var(--dim);font-size:10px}
+@media(max-width:1180px){.izgara{grid-template-columns:repeat(6,minmax(0,1fr))}.c3,.c4,.c5{grid-column:span 3}.c7{grid-column:span 6}}
+@media(max-width:900px){.oz{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.izgara{grid-template-columns:minmax(0,1fr)}.izgara>.pn{grid-column:1/-1}.pn>h3{flex-wrap:wrap}.pn>h3>span{white-space:normal}.ustist{width:100%;justify-content:space-between}.ustist div{text-align:left}}
+.fig{position:relative;flex:1;min-height:180px}.fig>svg{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y}
+.h220{min-height:220px}.h260{min-height:260px}.h330{min-height:360px}
+.buyuk{font:800 clamp(30px,3.4vw,40px)/1.05 var(--mono);color:var(--grn);text-shadow:0 0 22px #3ee08f40;font-variant-numeric:tabular-nums;white-space:nowrap}
+.buyuk.neg{color:var(--red);text-shadow:0 0 22px #ff546840}
+.kutu{border:1px solid var(--ln2);border-radius:6px;padding:6px 9px;margin:8px 0;display:flex;justify-content:space-between;gap:8px;background:#ffffff05}
+.ucl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:4px}
+.ucl small,.lbl{display:block;font-size:9.5px;color:var(--sf);letter-spacing:.1em;text-transform:uppercase}
+.ucl b{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.serit{height:5px;border-radius:3px;background:#ffffff10;margin-top:6px;overflow:hidden}.serit i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--amb))}
+.osi{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:10px;flex:1}
+.yan{display:flex;flex-direction:column;gap:8px}
+.yan div{border-left:3px solid var(--sf);padding-left:8px}
+.yan b{display:block;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.isi{display:grid;gap:3px;align-items:center}
+.isi .ad{color:var(--sf);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.isi i{display:block;height:13px;border-radius:2px;background:#ffffff0a}
+.alt{margin-top:auto;padding-top:8px;display:grid;gap:2px;font-size:10.5px}
+.alt div{display:flex;justify-content:space-between;gap:8px}
+.formul{border:1px solid var(--ln2);border-radius:6px;text-align:center;padding:7px;font-size:14px;font-weight:700;background:#ffffff05;margin-bottom:8px}
+.cipler{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:6px}
+.cip{border:1px solid var(--ln);border-radius:5px;padding:4px 7px;display:flex;justify-content:space-between;gap:6px;font-size:10.5px}
+.cip span{color:var(--sf);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbar{display:grid;grid-template-columns:62px minmax(0,1fr) 52px;gap:8px;align-items:center;margin-top:5px;font-size:10.5px}
+.pbar i{display:block;height:9px;border-radius:2px}
+.not{font-size:10px;color:var(--dim);border:1px solid var(--ln);border-radius:5px;padding:5px 8px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-size:9.5px;color:var(--sf);letter-spacing:.1em;text-align:left;font-weight:500;padding:4px 6px;border-bottom:1px solid var(--ln)}
+td{padding:6px 6px;border-bottom:1px solid #ffffff08;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.ad{white-space:normal}
+tr.ust1 td{background:#ff6a4812}
+.mb{display:block;height:6px;border-radius:3px;min-width:2px}
+.formul2{border:1px solid var(--ln2);border-radius:6px;padding:5px 8px;margin-bottom:6px;text-align:center;font-size:11.5px}
+.kart{border:1px solid var(--ln2);border-radius:6px;padding:7px 9px;margin-bottom:6px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:3px 9px;align-items:center;background:#ffffff04}
+.kart.y{border-color:#3ee08f66;background:#3ee08f08}.kart.k{border-color:#ff546866;background:#ff546808}
+.rozet{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:4px;color:#120607;background:var(--grn)}
+.rozet.k{background:var(--red)}.rozet.n{background:var(--sf)}
+.kart small{grid-column:2/4;color:var(--dim);font-size:10px}
+.iz{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:4px 12px;font-size:11px}
+.iz .z{color:var(--dim);white-space:nowrap}.iz .t{font-weight:700;white-space:nowrap}
+.tip{position:absolute;z-index:5;pointer-events:none;background:#2a1211;border:1px solid var(--ln2);border-radius:6px;padding:5px 9px;font-size:11px;white-space:nowrap;box-shadow:0 6px 18px #0008}
+.tip b{display:block;font-size:13px}
+.dip{margin:12px 4px 4px;color:var(--dim);font-size:10.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bos{color:var(--dim);font-size:11px;padding:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="ust">
+  <div class="logo" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M6 7l9 10-9 10M28 7l-9 10 9 10" fill="none" stroke="#ff6a48" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="17" r="2.6" fill="#f6b73c"/></svg></div>
+  <div class="bas">
+    <div class="ustyazi"><b>●</b> LOJİSTİK REJİM MODELİ + MAKRO + KRİPTO · XRP ↔ NAKİT</div>
+    <h1>XRP <span>//</span> MAKRO REJİM MASASI</h1>
+    <div class="altyazi" id="altyazi">3 gün ufuk · günlük karar · sanal 100 $ ileri test</div>
+  </div>
+  <div class="ustist">
+    <div><small>P(YUKARI)</small><b id="u-p">—</b></div>
+    <div><small>EDGE</small><b id="u-edge">—</b></div>
+    <div><small>XRP/USD</small><b id="u-fiyat">—</b></div>
+    <div class="saat"><b id="u-saat">--:--:-- UTC</b><small id="u-alt">—</small></div>
+  </div>
+</header>
+
+<div class="akis"><span class="pill">CANLI AKIŞ</span><div class="kay"><div class="yol" id="akis">Bağlanıyor…</div></div></div>
+
+<main class="izgara">
+  <section class="pn c12">
+    <h3><em>Canlı karar önizlemesi · gün şimdi kapansa</em><span class="etiket" id="o-etiket" style="border-color:var(--amb);color:var(--amb)!important">HESAPLANIYOR</span></h3>
+    <div class="oz">
+      <div>
+        <span class="lbl">Model şu an diyor ki</span>
+        <div class="buyuk" id="o-karar">—</div>
+        <div class="pbar2"><b></b><i id="o-ibre" style="left:50%"></i></div>
+        <div class="sf" style="display:flex;justify-content:space-between;font-size:10px"><span>nakit</span><span class="acc">eşik %47</span><span>XRP</span></div>
+        <div style="margin-top:8px" id="o-p">—</div>
+      </div>
+      <div>
+        <span class="lbl">Neden · resmi karardan bu yana en çok değişenler</span>
+        <ul class="neden" id="o-neden"><li class="dim">Canlı fiyat bekleniyor…</li></ul>
+      </div>
+      <div>
+        <span class="lbl">Bu sayfa açıkken olasılık</span>
+        <div class="fig" style="min-height:120px"><svg id="g-oz" role="img" aria-label="Oturum boyunca canlı olasılık"></svg></div>
+      </div>
+    </div>
+    <div class="not" id="o-not">Resmi karar her gün 00:00 UTC'de verilir. Bu önizleme aynı modeli canlı XRP, BTC ve ETH fiyatlarıyla her dakika yeniden çalıştırır; makro göstergeler son kapanışta, hacim dünkü değerde sabit tutulur. Gün içi sinyal olarak test edilmedi; işlem kararı için kullanma.</div>
+  </section>
+  <section class="pn c4">
+    <h3><em>Cüzdan · sanal</em><span class="etiket" id="c-durum">CANLI</span></h3>
+    <span class="lbl">İleri test kârı / zararı</span>
+    <div class="buyuk" id="c-pnl">—</div>
+    <div class="kutu"><span><span class="sf">BAŞLANGIÇ</span> 100 $ → <b id="c-deger">—</b></span><span class="amb" id="c-kat">—</span></div>
+    <div class="ucl">
+      <div><small>Gün</small><b id="c-gun">—</b></div>
+      <div><small>Geçiş</small><b id="c-gecis">—</b></div>
+      <div><small>Tut'a göre</small><b id="c-fark">—</b></div>
+    </div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;gap:8px" class="sf"><span id="c-poz">—</span><span id="c-tut">—</span></div>
+    <div class="serit"><i id="c-serit" style="width:0"></i></div>
+  </section>
+
+  <section class="pn c5">
+    <h3><em>Model vs eşik osilatörü</em><span>XRP · 90 gün</span></h3>
+    <div class="osi">
+      <div class="fig h220"><svg id="g-osi" role="img" aria-label="90 günlük model olasılığı ve eşik"></svg></div>
+      <div class="yan">
+        <div id="y-edge"><span class="lbl">Edge</span><b>—</b></div>
+        <div id="y-p" style="border-color:var(--amb)"><span class="lbl">P(yukarı)</span><b>—</b></div>
+        <div id="y-ust" style="border-color:var(--grn)"><span class="lbl">Eşik üstü (90g)</span><b>—</b></div>
+        <div id="y-karar" style="border-color:var(--acc)"><span class="lbl">Karar</span><b>—</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pn c3">
+    <h3><em>Piyasa ısı haritası</em><span>14 gün</span></h3>
+    <div class="isi" id="isi"><div class="bos">Gece görevinden sonra dolacak.</div></div>
+    <div class="alt" id="isi-alt"></div>
+  </section>
+
+  <section class="pn c7">
+    <h3><em>Gösterge halkası · <span class="acc" id="h-n">25</span> gösterge</em><span id="h-sinyal">—</span></h3>
+    <div class="fig h330"><svg id="g-halka" role="img" aria-label="Her göstergenin karara katkısı, halka biçiminde"></svg></div>
+    <div class="not" id="h-not">Her ışın bir gösterge: uzunluk = karara katkısı, yeşil = yükselişe iter, kırmızı = düşüşe iter.</div>
+  </section>
+
+  <section class="pn c5">
+    <h3><em>Lojistik model · p_yukarı vs p_aşağı</em></h3>
+    <div class="formul">ln(p<sub>↑</sub> / p<sub>↓</sub>) = β₀ + Σ βᵢ·zᵢ</div>
+    <div class="cipler" id="cipler"></div>
+    <div class="fig" style="min-height:170px"><svg id="g-selale" role="img" aria-label="Katkıların şelale grafiği"></svg></div>
+    <div class="pbar"><span>p_YUKARI</span><i id="pb-u" style="background:var(--grn);width:0"></i><b id="pb-ut" class="pos">—</b></div>
+    <div class="pbar"><span>p_AŞAĞI</span><i id="pb-a" style="background:var(--red);width:0"></i><b id="pb-at" class="neg">—</b></div>
+  </section>
+
+  <section class="pn c7">
+    <h3><em>Gösterge katkıları · sıralı</em><span class="amb" id="t-egitim">—</span></h3>
+    <div class="formul2">katkıᵢ = βᵢ · zᵢ   ·   z = (bugünkü değer − ortalama) / std</div>
+    <div style="overflow-x:auto"><table><thead><tr><th>GÖSTERGE</th><th>z</th><th>β</th><th>KATKI</th><th>YÖN</th><th style="width:26%">ETKİ</th></tr></thead><tbody id="tablo"></tbody></table></div>
+  </section>
+
+  <section class="pn c5">
+    <h3><em>Pozisyon · karar kartları</em><span>XRP ↔ NAKİT</span></h3>
+    <div id="kartlar"></div>
+  </section>
+
+  <section class="pn c7">
+    <h3><em id="m-baslik">XRP-USD · mum</em><span id="m-son">—</span></h3>
+    <div class="fig h260"><svg id="g-mum" role="img" aria-label="Son 48 saatin mum grafiği"></svg></div>
+  </section>
+
+  <section class="pn c5">
+    <h3><em>Fiyat · karar bölgeleri</em><span>90 gün</span></h3>
+    <div class="fig h260"><svg id="g-bolge" role="img" aria-label="90 günlük fiyat ve modelin nakit bölgeleri"></svg></div>
+    <div class="not">Gölge: modelin nakitte kalacağı günler (her gün yalnızca o gün bilinenle hesaplandı). Nokta rengi: olasılık.</div>
+  </section>
+
+  <section class="pn c7">
+    <h3><em>Karar izi</em><span class="etiket" style="border-color:var(--red);color:var(--red)!important">● CANLI</span></h3>
+    <div class="iz" id="iz"></div>
+  </section>
+
+  <section class="pn c5">
+    <h3><em>Model vs sadece tut</em><span id="mt-net">—</span></h3>
+    <div class="fig h220"><svg id="g-mt" role="img" aria-label="Model portföyü ve sadece tut karşılaştırması"></svg></div>
+  </section>
+</main>
+<div class="dip"><span id="guncel">—</span><span>Sanal para ile ileriye dönük testtir; gerçek işlem yapılmaz, yatırım tavsiyesi değildir.</span></div>
+</div>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (x, d = 4) => Number(x).toLocaleString('tr-TR', {minimumFractionDigits: d, maximumFractionDigits: d});
+const usd = x => fmt(x, 2) + ' $';
+const isaret = (x, d = 1) => (x >= 0 ? '+' : '−') + fmt(Math.abs(x), d);
+const tarihK = s => new Date(s + 'T12:00:00Z').toLocaleDateString('tr-TR', {day: 'numeric', month: 'short'});
+const NS = 'http://www.w3.org/2000/svg';
+const ESIK = 0.47;
+const S = {veri: null, fiyat: null, yuzde: null, kaynak: '', aralik: '', gunluk: [], mum: [], mumZaman: 0, yedek: false, btc: null, eth: null, oz: [], ozSon: null};
+
+// ---------------------------------------------------------------- veri kaynakları
+async function getir(url) { const r = await fetch(url, {cache: 'no-store'}); if (!r.ok) throw new Error(r.status); return r.json(); }
+const BH = ['https://api.binance.com', 'https://data-api.binance.vision'];
+async function binance(yol) { for (const h of BH) { try { return await getir(h + yol); } catch (e) {} } throw new Error('binance'); }
+const CG = 'https://api.coingecko.com/api/v3';
+const KR = 'https://api.kraken.com/0/public';
+async function kraken(yol) {
+  const j = await getir(KR + yol); if (j.error?.length) throw new Error(j.error[0]);
+  if (yol.startsWith('/Ticker')) return Object.values(j.result)[0];
+  return j.result[Object.keys(j.result).find(k => k !== 'last')];
+}
+async function anlik() {
+  try {
+    const [tj, o] = await Promise.all([getir(KR + '/Ticker?pair=XRPUSD,XBTUSD,ETHUSD'), kraken('/OHLC?pair=XRPUSD&interval=60')]);
+    if (tj.error?.length) throw new Error(tj.error[0]);
+    const bul = ad => { const k = Object.keys(tj.result).find(k => k.includes(ad)); return k ? +tj.result[k].c[0] : null; };
+    const rows = o.slice(-48), fiyat = bul('XRP'), once = rows.length > 24 ? +rows[rows.length - 25][4] : +rows[0][1];
+    if (!fiyat) throw new Error('kraken xrp');
+    return {fiyat, btc: bul('XBT'), eth: bul('ETH'), yuzde: (fiyat / once - 1) * 100, mum: rows.map(x => ({t: x[0] * 1000, o: +x[1], h: +x[2], l: +x[3], c: +x[4]})), aralik: '1 saat', kaynak: 'Kraken'};
+  } catch (e) {}
+  try {
+    const [t, k] = await Promise.all([binance('/api/v3/ticker/24hr?symbol=XRPUSDT'), binance('/api/v3/klines?symbol=XRPUSDT&interval=1h&limit=48')]);
+    return {fiyat: +t.lastPrice, yuzde: +t.priceChangePercent, mum: k.map(x => ({t: x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4]})), aralik: '1 saat', kaynak: 'Binance'};
+  } catch (e) {}
+  try {
+    const s = await getir(CG + '/simple/price?ids=ripple,bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+    let mum = null;
+    if (!S.mum.length || Date.now() - S.mumZaman > 300000) {
+      try { mum = (await getir(CG + '/coins/ripple/ohlc?vs_currency=usd&days=2')).map(([t, o, h, l, c]) => ({t, o, h, l, c})); } catch (e) {}
+    }
+    return {fiyat: s.ripple.usd, btc: s.bitcoin?.usd, eth: s.ethereum?.usd, yuzde: s.ripple.usd_24h_change, mum, aralik: '30 dk', kaynak: 'CoinGecko'};
+  } catch (e) {}
+  const c = await getir('https://api.coinbase.com/v2/prices/XRP-USD/spot');
+  return {fiyat: +c.data.amount, yuzde: null, mum: null, kaynak: 'Coinbase'};
+}
+async function gunlukSeri() {
+  try { const k = await kraken('/OHLC?pair=XRPUSD&interval=1440'); return k.slice(-90).map(x => ({t: x[0] * 1000, v: +x[4]})); } catch (e) {}
+  try { const k = await binance('/api/v3/klines?symbol=XRPUSDT&interval=1d&limit=90'); return k.map(x => ({t: x[0], v: +x[4]})); } catch (e) {}
+  const d = await getir(CG + '/coins/ripple/market_chart?vs_currency=usd&days=91&interval=daily');
+  return d.prices.map(([t, v]) => ({t, v}));
+}
+async function veriYukle() { try { const r = await fetch('veri.json?t=' + Date.now(), {cache: 'no-store'}); if (r.ok) S.veri = await r.json(); } catch (e) {} }
+
+// ---------------------------------------------------------------- svg yardımcıları
+function el(ad, nit, ic) { const e = document.createElementNS(NS, ad); for (const k in nit) e.setAttribute(k, nit[k]); if (ic != null) e.textContent = ic; return e; }
+function hazirla(svg) { const W = svg.clientWidth, H = svg.clientHeight; svg.innerHTML = ''; return {W, H}; }
+function olcek(W, H, pad, x0, x1, y0, y1) {
+  return {X: t => pad.l + (t - x0) / ((x1 - x0) || 1) * (W - pad.l - pad.r), Y: v => pad.t + (1 - (v - y0) / ((y1 - y0) || 1)) * (H - pad.t - pad.b)};
+}
+function yEksen(svg, W, pad, Y, y0, y1, n, f) {
+  for (let i = 0; i <= n; i++) { const v = y0 + (y1 - y0) * i / n, y = Y(v);
+    svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#3e1a17', 'stroke-dasharray': '2 4'}));
+    svg.append(el('text', {x: W - pad.r + 6, y: y + 3.5, fill: '#b8978f', 'font-size': 10}, f(v))); }
+}
+function ipucuKur(svg) {
+  if (svg._tip) return;
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; svg.parentElement.append(tip); svg._tip = tip;
+  const al = e => { svg._hx = e.clientX - svg.getBoundingClientRect().left; ipucuCiz(svg); };
+  svg.addEventListener('pointermove', al); svg.addEventListener('pointerdown', al);
+  svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { svg._hx = null; ipucuCiz(svg); } });
+}
+function ipucuCiz(svg) {
+  const o = svg._o, tip = svg._tip; svg.querySelector('.hv')?.remove();
+  if (!tip) return;
+  if (!o || !o.pts.length || svg._hx == null) { tip.hidden = true; return; }
+  let en = o.pts[0], ed = Infinity;
+  for (const p of o.pts) { const dx = Math.abs(o.X(p.t) - svg._hx); if (dx < ed) { ed = dx; en = p; } }
+  const x = o.X(en.t), y = o.Y(en.v);
+  const g = el('g', {class: 'hv'});
+  g.append(el('line', {x1: x, x2: x, y1: o.pad.t, y2: o.H - o.pad.b, stroke: '#f6e7e2', 'stroke-dasharray': '3 3', opacity: .5}));
+  g.append(el('circle', {cx: x, cy: y, r: 4.5, fill: '#fff', stroke: '#120607', 'stroke-width': 2}));
+  svg.append(g);
+  tip.innerHTML = o.tip(en); tip.hidden = false;
+  const kap = svg.parentElement, tw = tip.offsetWidth, th = tip.offsetHeight;
+  let l = x + 12; if (l + tw > kap.clientWidth) l = x - tw - 12;
+  let t = y - th - 10; if (t < 0) t = y + 12;
+  tip.style.left = Math.max(0, l) + 'px'; tip.style.top = t + 'px';
+}
+function ipucuKaydet(svg, o) { ipucuKur(svg); svg._o = o; ipucuCiz(svg); }
+document.addEventListener('pointerdown', e => { for (const s of document.querySelectorAll('svg')) if (s._tip && !s.contains(e.target)) { s._hx = null; ipucuCiz(s); } });
+
+// ---------------------------------------------------------------- yardımcı hesaplar
+function sonKarar() { return S.veri?.gunler?.at(-1) || null; }
+function sonP() { return sonKarar()?.olasilik ?? S.veri?.ic?.p ?? null; }
+function degerler() {
+  const d = S.veri?.durum; if (!d?.model || !S.fiyat) return null;
+  return {m: d.model.nakit + d.model.xrp * S.fiyat, t: d.tut.xrp * S.fiyat, poz: d.model.poz, gecis: d.gecis || 0, bas: d.baslangic, giris: 100 / d.tut.xrp};
+}
+function kapanislar() {
+  const g = S.veri?.gecmis?.length ? S.veri.gecmis : (S.veri?.gunler || []).map(k => ({tarih: k.tarih, kapanis: k.kapanis}));
+  return g.filter(x => x.kapanis > 0).map(x => ({tarih: x.tarih, t: Date.parse(x.tarih + 'T00:00:00Z'), v: x.kapanis}));
+}
+function yedekKullan() {
+  const k = kapanislar(); if (!k.length) return false;
+  const son = k.at(-1), onceki = k.at(-2);
+  S.fiyat = son.v; S.yuzde = onceki ? (son.v / onceki.v - 1) * 100 : null; S.kaynak = 'son kapanış ' + tarihK(son.tarih); S.yedek = true;
+  if (!S.mum.length || S.aralik.startsWith('günlük')) {
+    S.mum = k.slice(-30).map((x, i, a) => { const o = i ? a[i - 1].v : x.v; return {t: x.t, o, h: Math.max(o, x.v), l: Math.min(o, x.v), c: x.v}; });
+    S.aralik = 'günlük'; S.mumZaman = 0;
+  }
+  return true;
+}
+// ---------------------------------------------------------------- canlı önizleme: aynı model, canlı fiyatlarla
+function ozHesapla() {
+  S.ozSon = null;
+  const c = S.veri?.canli; if (!c || S.yedek || !S.fiyat || !S.btc || !S.eth) return;
+  const L = Math.log, canli = {xrp: S.fiyat, btc: S.btc, eth: S.eth}, x = {};
+  for (const k of ['xrp', 'btc', 'eth']) { const h = c.ham[k]; x[k + '_g1'] = L(canli[k]) - L(h[30]); x[k + '_g7'] = L(canli[k]) - L(h[24]); }
+  x.xrp_g30 = L(canli.xrp) - L(c.ham.xrp[1]); x.btc_g30 = L(canli.btc) - L(c.ham.btc[1]);
+  const h = c.ham.xrp, d = []; for (let k = 25; k <= 30; k++) d.push(L(h[k]) - L(h[k - 1])); d.push(L(canli.xrp) - L(h[30]));
+  const ort = d.reduce((a, v) => a + v, 0) / d.length; x.xrp_oynaklik7 = Math.sqrt(d.reduce((a, v) => a + (v - ort) ** 2, 0) / (d.length - 1));
+  x.xrp_btc_g7 = x.xrp_g7 - x.btc_g7; x.xrp_hacim_degisim = c.hacim_sabit;
+  for (const [m, v] of Object.entries(c.makro)) { const sev = c.seviye.includes(m), f = sev ? (z => z) : L;
+    x[m + '_g1'] = 0; x[m + '_g7'] = f(v[7]) - f(v[1]); if (sev) x[m + '_seviye'] = v[7]; }
+  if (c.kolonlar.some(k => !Number.isFinite(x[k]))) return;
+  const katki = c.kolonlar.map((k, i) => ({k, x: x[k], katki: c.b[i] * (x[k] - c.ort[i]) / c.std[i]}));
+  const logit = c.b0 + katki.reduce((a, q) => a + q.katki, 0), p = 1 / (1 + Math.exp(-logit));
+  S.ozSon = {p, logit, katki, t: Date.now()};
+  const son = S.oz.at(-1); if (!son || Date.now() - son.t > 50000) { S.oz.push({t: Date.now(), p}); if (S.oz.length > 720) S.oz.shift(); }
+}
+const yuzdeLog = v => isaret((Math.exp(v) - 1) * 100, 2) + '%';
+function ozAcikla(k, x) {
+  const coin = {xrp: 'XRP', btc: 'BTC', eth: 'ETH'};
+  let m = k.match(/^(xrp|btc|eth)_g(\d+)$/);
+  if (m) return `${coin[m[1]]} ${m[2] === '1' ? 'son kapanıştan bu yana' : m[2] + ' günde'} ${yuzdeLog(x)}`;
+  if (k === 'xrp_oynaklik7') return `XRP'nin 7 günlük oynaklığı %${fmt(x * 100, 2)}`;
+  if (k === 'xrp_btc_g7') return `XRP, BTC'ye göre 7 günde ${yuzdeLog(x)}`;
+  if (k === 'xrp_hacim_degisim') return 'XRP hacmi (dünkü değer, sabit)';
+  m = k.match(/^(\w+)_(g\d+|seviye)$/);
+  const ad = {spx: 'S&P 500', ndx: 'Nasdaq', altin: 'Altın', dxy: 'Dolar endeksi', vix: 'VIX', faiz10y: 'ABD 10Y faiz'}[m?.[1]] || k;
+  if (m?.[2] === 'seviye') return `${ad} seviyesi ${fmt(x, 2)} (son kapanış)`;
+  if (m?.[2] === 'g1') { const v = S.veri?.canli?.makro?.[m[1]], sev = ['vix', 'faiz10y'].includes(m[1]);
+    const dun = v ? (sev ? isaret(v[7] - v[6], 2) + ' puan' : yuzdeLog(Math.log(v[7]) - Math.log(v[6]))) : '';
+    return `${ad}: dünkü ${dun} hareketi artık hesapta yok; bugünün kapanışı henüz gelmedi, değişim 0 sayılıyor`; }
+  return `${ad} ${m?.[2] === 'g1' ? 'günlük' : '7 günlük'} değişim ${['vix', 'faiz10y'].includes(m?.[1]) ? isaret(x, 2) + ' puan' : yuzdeLog(x)} (son kapanış)`;
+}
+function onizleme() {
+  const o = S.ozSon, ic = S.veri?.ic, c = S.veri?.canli, et = $('o-etiket');
+  if (!o) {
+    et.textContent = S.yedek ? 'CANLI FİYAT YOK' : !c ? 'GECE VERİSİ BEKLENİYOR' : 'BTC/ETH BEKLENİYOR';
+    $('o-karar').textContent = '—'; $('o-p').textContent = S.yedek ? 'Canlı fiyat gelince önizleme başlar.' : '—'; return;
+  }
+  const xrp = o.p > ESIK, resmi = sonP(), fark = resmi == null ? null : (o.p - resmi) * 100;
+  et.textContent = 'CANLI · ' + new Date(o.t).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'});
+  et.style.cssText = 'border-color:var(--grn);color:var(--grn)!important';
+  $('o-karar').textContent = xrp ? "XRP'DE KAL" : 'NAKİTE GEÇ'; $('o-karar').className = 'buyuk' + (xrp ? '' : ' neg');
+  $('o-ibre').style.left = Math.max(0, Math.min(100, (o.p - 0.3) / 0.4 * 100)) + '%';
+  $('o-p').innerHTML = `olasılık <b class="${xrp ? 'pos' : 'neg'}">%${esc(fmt(o.p * 100, 1))}</b>` +
+    (resmi == null ? '' : ` · resmi karar %${esc(fmt(resmi * 100, 1))} · fark <b class="${fark >= 0 ? 'pos' : 'neg'}">${esc(isaret(fark, 1))} puan</b>`) +
+    `<br><span class="dim" style="font-size:10px">baz: ${esc(tarihK(c.son_tarih))} kapanışı · ${esc(S.kaynak)}${(Date.now() - Date.parse(c.son_tarih + 'T00:00:00Z')) > 2 * 864e5 ? ' · gece verisi bir gün geride, sabah güncellenecek' : ''}</span>`;
+  // açıklama: resmi karardaki katkıya göre en çok değişen göstergeler
+  const resmiK = new Map((ic?.katki || []).map(q => [q.k, q.katki]));
+  const sirali = o.katki.map(q => ({...q, d: q.katki - (resmiK.get(q.k) ?? 0)})).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+  const ad = new Map((ic?.katki || []).map(q => [q.k, q.ad]));
+  $('o-neden').innerHTML = sirali.slice(0, 4).map(q => `<li class="${q.d >= 0 ? 'y' : 'k'}">${esc(ozAcikla(q.k, q.x))}
+    <small>${esc(ad.get(q.k) || q.k)} · karara etkisi ${q.d >= 0 ? 'yükselişe doğru' : 'düşüşe doğru'} ${esc(isaret(q.d, 3))} logit</small></li>`).join('')
+    + `<li style="border-color:var(--amb)">Toplam: logit ${esc(isaret(o.logit, 3))} → olasılık %${esc(fmt(o.p * 100, 1))} ${xrp ? '> %47 → XRP' : '≤ %47 → nakit'}</li>`;
+}
+function ozGrafik() {
+  const svg = $('g-oz'), {W, H} = hazirla(svg), g = S.oz; if (!W) return;
+  if (g.length < 2) { svg.append(el('text', {x: W / 2, y: H / 2, fill: '#7c5f58', 'text-anchor': 'middle', 'font-size': 10.5}, 'Sayfa açık kaldıkça dakika dakika dolar')); return; }
+  const pad = {l: 4, r: 40, t: 8, b: 16}, ps = g.map(q => q.p), lo = Math.min(...ps, ESIK) - 0.01, hi = Math.max(...ps, ESIK) + 0.01;
+  const O = olcek(W, H, pad, g[0].t, g.at(-1).t, lo, hi);
+  yEksen(svg, W, pad, O.Y, lo, hi, 2, v => fmt(v, 3));
+  svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: O.Y(ESIK), y2: O.Y(ESIK), stroke: '#ff6a48', 'stroke-dasharray': '5 4'}));
+  svg.append(el('path', {d: g.map((q, i) => (i ? 'L' : 'M') + O.X(q.t).toFixed(1) + ' ' + O.Y(q.p).toFixed(1)).join(''), fill: 'none', stroke: '#f6b73c', 'stroke-width': 1.8}));
+  svg.append(el('circle', {cx: O.X(g.at(-1).t), cy: O.Y(g.at(-1).p), r: 3.5, fill: g.at(-1).p > ESIK ? '#3ee08f' : '#ff5468'}));
+  ipucuKaydet(svg, {pts: g.map(q => ({t: q.t, v: q.p, q})), X: O.X, Y: O.Y, pad, H,
+    tip: q => `<b class="${q.v > ESIK ? 'pos' : 'neg'}">%${esc(fmt(q.v * 100, 1))}</b>${esc(new Date(q.t).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'}))}`});
+}
+const logitOf = ic => ic.sabit + ic.katki.reduce((a, k) => a + k.katki, 0);
+
+// ---------------------------------------------------------------- üst şerit ve saat
+function saat() {
+  const n = new Date();
+  $('u-saat').textContent = n.toISOString().slice(11, 19) + ' UTC';
+  const s = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1)), k = s - n;
+  const iki = v => String(Math.floor(v)).padStart(2, '0');
+  $('u-alt').textContent = n.toLocaleDateString('tr-TR', {day: 'numeric', month: 'short'}) + ' · sonraki karar ' + iki(k / 36e5) + ':' + iki(k % 36e5 / 6e4) + ':' + iki(k % 6e4 / 1e3);
+}
+function ust() {
+  const p = sonP();
+  if (p != null) {
+    $('u-p').textContent = '%' + fmt(p * 100, 1); $('u-p').className = p > ESIK ? 'pos' : 'neg';
+    $('u-edge').textContent = isaret((p - ESIK) * 100, 1) + ' puan'; $('u-edge').className = p > ESIK ? 'amb' : 'neg';
+  }
+  if (S.fiyat) $('u-fiyat').innerHTML = esc(fmt(S.fiyat)) + (S.yuzde == null ? '' : ` <span class="${S.yuzde >= 0 ? 'pos' : 'neg'}" style="font-size:12px">${esc(isaret(S.yuzde, 2))}%</span>`);
+  const ic = S.veri?.ic;
+  if (ic) $('altyazi').textContent = `3 gün ufuk · ${ic.ozellik} gösterge · ${fmt(ic.egitim_gun, 0)} gün eğitim · günlük karar · sanal 100 $ ileri test`;
+  const k = sonKarar(), d = degerler(), parca = [];
+  if (S.fiyat) parca.push(`XRP ${fmt(S.fiyat)} $ ${S.yuzde == null ? '' : isaret(S.yuzde, 2) + '%'} · kaynak ${S.kaynak}`);
+  if (k) parca.push(`KARAR ${tarihK(k.tarih)}: ${k.karar === 'NAKIT' ? 'NAKİTTE KAL' : "XRP'DE KAL"} · p ${fmt(k.olasilik, 3)} ${k.olasilik > ESIK ? '>' : '≤'} ${fmt(ESIK, 2)}`);
+  if (S.ozSon) parca.push(`ÖNİZLEME (gün şimdi kapansa): p ${fmt(S.ozSon.p, 3)} → ${S.ozSon.p > ESIK ? "XRP'DE KAL" : 'NAKİTE GEÇ'}`);
+  if (d) parca.push(`SANAL CÜZDAN ${usd(d.m)} · SADECE TUT ${usd(d.t)}`);
+  for (const x of S.veri?.makro || []) parca.push(`${x.ad} ${fmt(x.son, 2)} ${isaret(x.degisim, 2)}${x.birim === '%' ? '%' : ' puan'}`);
+  if (ic) parca.push(`EN GÜÇLÜ GÖSTERGE: ${ic.katki[0].ad} ${isaret(ic.katki[0].katki, 3)}`);
+  parca.push(`EŞİK ${fmt(ESIK, 2)} · GEÇİŞ MALİYETİ %0,15 · KARAR 00:00 UTC`);
+  const html = parca.map(esc).join('<i>▪</i>') + '<i>▪</i>';
+  if ($('akis')._son !== html) { $('akis').innerHTML = html + html; $('akis')._son = html; }
+}
+
+// ---------------------------------------------------------------- cüzdan
+function cuzdan() {
+  const d = degerler(); if (!d) return;
+  const pnl = d.m - 100;
+  $('c-pnl').textContent = (pnl >= 0 ? '+' : '−') + fmt(Math.abs(pnl), 2) + ' $'; $('c-pnl').className = 'buyuk' + (pnl < 0 ? ' neg' : '');
+  $('c-deger').textContent = usd(d.m); $('c-kat').textContent = fmt(d.m / 100, 3) + '×';
+  $('c-gun').textContent = S.veri?.gunler?.length || 0; $('c-gecis').textContent = d.gecis;
+  const f = d.m - d.t; $('c-fark').innerHTML = `<span class="${f >= 0 ? 'pos' : 'neg'}">${esc((f >= 0 ? '+' : '−') + fmt(Math.abs(f), 2))} $</span>`;
+  $('c-poz').textContent = d.poz ? 'pozisyon: XRP %100' : 'pozisyon: NAKİT %100';
+  $('c-tut').textContent = 'sadece tut: ' + usd(d.t);
+  $('c-serit').style.width = d.poz ? '100%' : '0%';
+}
+
+// ---------------------------------------------------------------- osilatör
+function osilator() {
+  const svg = $('g-osi'), {W, H} = hazirla(svg), g = S.veri?.gecmis || [], p = sonP();
+  if (p != null) {
+    const b = $('y-edge').querySelector('b'); b.textContent = isaret((p - ESIK) * 100, 1) + ' p'; b.className = p > ESIK ? 'pos' : 'neg';
+    $('y-edge').style.borderColor = p > ESIK ? 'var(--grn)' : 'var(--red)';
+    $('y-p').querySelector('b').textContent = '%' + fmt(p * 100, 2);
+    const k = sonKarar(); $('y-karar').querySelector('b').textContent = k ? (k.karar === 'NAKIT' ? 'NAKİT' : 'XRP TUT') : '—';
+  }
+  if (g.length) $('y-ust').querySelector('b').textContent = g.filter(x => x.p > ESIK).length + ' / ' + g.length;
+  if (!W || g.length < 2) return;
+  const pad = {l: 4, r: 40, t: 8, b: 18}, ust = H * 0.58;
+  const ts = g.map(x => Date.parse(x.tarih + 'T00:00:00Z')), ps = g.map(x => x.p);
+  const lo = Math.min(...ps, ESIK) - 0.01, hi = Math.max(...ps, ESIK) + 0.01;
+  const A = olcek(W, ust + pad.t, {l: pad.l, r: pad.r, t: pad.t, b: 4}, ts[0], ts.at(-1), lo, hi);
+  yEksen(svg, W, pad, A.Y, lo, hi, 2, v => fmt(v, 2));
+  svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: A.Y(ESIK), y2: A.Y(ESIK), stroke: '#ff6a48', 'stroke-dasharray': '5 4'}));
+  svg.append(el('text', {x: pad.l + 2, y: A.Y(ESIK) - 4, fill: '#ff6a48', 'font-size': 9.5}, 'eşik 0,47'));
+  const d = g.map((x, i) => (i ? 'L' : 'M') + A.X(ts[i]).toFixed(1) + ' ' + A.Y(x.p).toFixed(1)).join('');
+  svg.append(el('path', {d, fill: 'none', stroke: '#f6b73c', 'stroke-width': 1.8, style: 'filter:drop-shadow(0 0 4px #f6b73c88)'}));
+  const by0 = ust + 14, by1 = H - pad.b, orta = (by0 + by1) / 2, m = Math.max(...ps.map(v => Math.abs(v - ESIK)), 0.01);
+  const Yb = v => orta - (v / m) * (by1 - by0) / 2, bw = Math.max(1.5, (W - pad.l - pad.r) / g.length - 1);
+  g.forEach((x, i) => { const e = x.p - ESIK, y = Yb(e);
+    svg.append(el('rect', {x: A.X(ts[i]) - bw / 2, y: Math.min(y, orta), width: bw, height: Math.max(1, Math.abs(y - orta)), fill: e > 0 ? '#3ee08f' : '#ff5468', opacity: .85})); });
+  svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: orta, y2: orta, stroke: '#5e2a22'}));
+  svg.append(el('text', {x: W - pad.r + 6, y: orta + 3.5, fill: '#b8978f', 'font-size': 9.5}, 'edge'));
+  svg.append(el('text', {x: pad.l, y: H - 4, fill: '#7c5f58', 'font-size': 9.5}, tarihK(g[0].tarih) + ' ← model — eşik → ' + tarihK(g.at(-1).tarih)));
+  ipucuKaydet(svg, {pts: g.map((x, i) => ({t: ts[i], v: x.p, x})), X: A.X, Y: A.Y, pad, H,
+    tip: q => `<b class="${q.x.p > ESIK ? 'pos' : 'neg'}">p ${esc(fmt(q.x.p, 3))}</b>${esc(tarihK(q.x.tarih))} · XRP ${esc(fmt(q.x.kapanis))}`});
+}
+
+// ---------------------------------------------------------------- ısı haritası
+function isiHaritasi() {
+  const isi = S.veri?.isi, gunler = S.veri?.isi_gunler; if (!isi?.length) return;
+  const ters = new Set(['vix', 'dxy', 'faiz10y']), kripto = new Set(['xrp', 'btc', 'eth']);
+  let h = '';
+  for (const s of isi) {
+    const m = Math.max(...s.d.filter(v => v != null).map(Math.abs), 1e-9);
+    h += `<span class="ad" title="${esc(s.ad)}">${esc(s.ad)}</span>`;
+    s.d.forEach((v, i) => {
+      if (v == null || (!kripto.has(s.k) && v === 0)) { h += `<i title="${esc(tarihK(gunler[i]))}: piyasa kapalı"></i>`; return; }
+      const iyi = ters.has(s.k) ? v < 0 : v > 0, a = (0.18 + 0.82 * Math.min(1, Math.abs(v) / m)).toFixed(2);
+      h += `<i style="background:${iyi ? `rgba(62,224,143,${a})` : `rgba(255,84,104,${a})`}" title="${esc(s.ad + ' ' + tarihK(gunler[i]) + ': ' + isaret(v, 2) + (s.birim === '%' ? '%' : ' puan'))}"></i>`;
+    });
+  }
+  $('isi').style.gridTemplateColumns = `72px repeat(${gunler.length},minmax(0,1fr))`; $('isi').innerHTML = h;
+  const xrp = isi.find(s => s.k === 'xrp'), top = xrp ? xrp.d.reduce((a, v) => a * (1 + (v || 0) / 100), 1) - 1 : null;
+  const yesil = isi.reduce((a, s) => a + ((ters.has(s.k) ? s.d.at(-1) < 0 : s.d.at(-1) > 0) ? 1 : 0), 0);
+  $('isi-alt').innerHTML = `<div><span class="sf">XRP 14 gün</span><b class="${top >= 0 ? 'pos' : 'neg'}">${top == null ? '—' : esc(isaret(top * 100, 1)) + '%'}</b></div>
+    <div><span class="sf">Son gün olumlu</span><b>${yesil} / ${isi.length}</b></div><div><span class="sf">Renk</span><span>yeşil = XRP için olumlu</span></div>`;
+}
+
+// ---------------------------------------------------------------- gösterge halkası
+function halka() {
+  const svg = $('g-halka'), {W, H} = hazirla(svg), ic = S.veri?.ic;
+  if (!W) return;
+  if (!ic) { svg.append(el('text', {x: W / 2, y: H / 2, fill: '#7c5f58', 'text-anchor': 'middle', 'font-size': 12}, 'Model iç yapısı bir sonraki gece görevinde gelecek')); return; }
+  $('h-n').textContent = ic.ozellik;
+  const logit = logitOf(ic);
+  $('h-sinyal').textContent = ic.p > ESIK ? 'XRP TUT SİNYALİ' : 'NAKİT SİNYALİ'; $('h-sinyal').className = ic.p > ESIK ? 'pos' : 'neg';
+  const cx = W / 2, cy = H / 2, R = Math.min(W * 0.4, H * 0.42), r0 = R * 0.34, n = ic.katki.length;
+  const sira = [...ic.katki].sort((a, b) => a.k.localeCompare(b.k)), m = Math.max(...sira.map(k => Math.abs(k.katki)), 1e-6);
+  const defs = el('defs', {}); defs.innerHTML = '<radialGradient id="hg"><stop offset="0" stop-color="#ff6a48" stop-opacity=".32"/><stop offset="1" stop-color="#ff6a48" stop-opacity="0"/></radialGradient>'; svg.append(defs);
+  svg.append(el('circle', {cx, cy, r: R * 1.05, fill: 'url(#hg)'}));
+  let tohum = 7; const rnd = () => (tohum = (tohum * 16807) % 2147483647) / 2147483647;
+  const lifler = el('g', {});
+  sira.forEach((k, i) => {
+    const a = -Math.PI / 2 + i / n * Math.PI * 2, guc = Math.abs(k.katki) / m, renk = k.katki >= 0 ? '#3ee08f' : '#ff5468';
+    const adet = 10 + Math.round(guc * 26);
+    for (let j = 0; j < adet; j++) {
+      const sap = (rnd() - .5) * 0.5, a2 = a + Math.PI * (0.55 + rnd() * 0.9), rr = r0 * (0.95 + rnd() * 0.2);
+      const x1 = cx + Math.cos(a) * R * 0.86, y1 = cy + Math.sin(a) * R * 0.86, x2 = cx + Math.cos(a2) * rr, y2 = cy + Math.sin(a2) * rr;
+      const kx = cx + Math.cos(a + sap) * R * (0.25 + rnd() * 0.3), ky = cy + Math.sin(a + sap) * R * (0.25 + rnd() * 0.3);
+      lifler.append(el('path', {d: `M${x1.toFixed(1)} ${y1.toFixed(1)}Q${kx.toFixed(1)} ${ky.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`, fill: 'none', stroke: j % 3 ? '#ffb08f' : renk, 'stroke-width': .6, opacity: (0.06 + guc * 0.3).toFixed(2)}));
+    }
+  });
+  svg.append(lifler);
+  svg.append(el('circle', {cx, cy, r: R * 0.86, fill: 'none', stroke: '#5e2a22', 'stroke-dasharray': '2 5'}));
+  sira.forEach((k, i) => {
+    const a = -Math.PI / 2 + i / n * Math.PI * 2, guc = Math.abs(k.katki) / m, renk = k.katki >= 0 ? '#3ee08f' : '#ff5468';
+    const ri = R * 0.86, ro = ri + 6 + guc * R * 0.2, ca = Math.cos(a), sa = Math.sin(a);
+    svg.append(el('line', {x1: cx + ca * ri, y1: cy + sa * ri, x2: cx + ca * ro, y2: cy + sa * ro, stroke: renk, 'stroke-width': 3, 'stroke-linecap': 'round', style: `filter:drop-shadow(0 0 3px ${renk})`}));
+    svg.append(el('circle', {cx: cx + ca * ro, cy: cy + sa * ro, r: 2.4, fill: renk}));
+    if (guc > 0.4 && W > 420) svg.append(el('text', {x: cx + ca * (ro + 8), y: cy + sa * (ro + 8) + 3, fill: '#f6e7e2', 'font-size': 9.5, 'text-anchor': ca > 0.2 ? 'start' : ca < -0.2 ? 'end' : 'middle'}, k.ad));
+  });
+  svg.append(el('ellipse', {cx, cy, rx: r0 * 1.15, ry: r0 * 0.62, fill: '#160707', stroke: '#ff6a48', 'stroke-width': 1.5, style: 'filter:drop-shadow(0 0 10px #ff6a4888)'}));
+  svg.append(el('circle', {cx, cy, r: r0 * 0.42, fill: '#2a0d0b', stroke: '#ff6a48', 'stroke-width': 2}));
+  svg.append(el('text', {x: cx, y: cy + 5, fill: ic.p > ESIK ? '#3ee08f' : '#ff5468', 'font-size': Math.max(12, r0 * 0.3), 'font-weight': 800, 'text-anchor': 'middle'}, '%' + fmt(ic.p * 100, 0)));
+  svg.append(el('text', {x: cx, y: cy + r0 * 0.62 + 16, fill: '#f6e7e2', 'font-size': 10.5, 'text-anchor': 'middle'}, `logit ${isaret(logit, 3)}  ·  p↑ ${fmt(ic.p, 2)}`));
+  const pozitif = ic.katki.filter(k => k.katki > 0).length;
+  $('h-not').innerHTML = `<span class="amb">SİNYAL ${esc(tarihK(ic.tarih))}</span> · ${pozitif}/${ic.katki.length} gösterge yükselişe iter · en güçlü: ${esc(ic.katki[0].ad)} (${esc(isaret(ic.katki[0].katki, 3))}) · ışın uzunluğu = katkı`;
+}
+
+// ---------------------------------------------------------------- şelale + formül
+function selale() {
+  const ic = S.veri?.ic, svg = $('g-selale'), {W, H} = hazirla(svg); if (!ic) return;
+  $('cipler').innerHTML = ic.katki.slice(0, 4).map((k, i) => `<div class="cip"><span>x${i + 1} ${esc(k.ad)}</span><b class="${k.katki >= 0 ? 'pos' : 'neg'}">z ${esc(isaret(k.z, 2))}</b></div>`).join('');
+  $('pb-u').style.width = (ic.p * 100) + '%'; $('pb-a').style.width = ((1 - ic.p) * 100) + '%';
+  $('pb-ut').textContent = '%' + fmt(ic.p * 100, 1); $('pb-at').textContent = '%' + fmt((1 - ic.p) * 100, 1);
+  if (!W) return;
+  const N = W < 420 ? 8 : 12, ana = ic.katki.slice(0, N), diger = ic.katki.slice(N).reduce((a, k) => a + k.katki, 0);
+  const adim = [{ad: 'β₀ (sabit)', v: ic.sabit}, ...ana.map(k => ({ad: k.ad, v: k.katki})), {ad: `diğer ${ic.katki.length - N} gösterge`, v: diger}];
+  let top = 0; const bar = adim.map(a => { const b = {ad: a.ad, v: a.v, bas: top}; top += a.v; b.son = top; return b; });
+  bar.push({ad: 'Σ logit', v: top, bas: 0, son: top, toplam: true});
+  const vals = bar.flatMap(b => [b.bas, b.son]), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals), pd = (hi - lo) * 0.1 || 0.05;
+  const pad = {l: 4, r: 44, t: 8, b: 16}, sx = (W - pad.l - pad.r) / bar.length;
+  const Y = v => pad.t + (1 - (v - (lo - pd)) / ((hi + pd) - (lo - pd))) * (H - pad.t - pad.b);
+  yEksen(svg, W, pad, Y, lo - pd, hi + pd, 2, v => fmt(v, 2));
+  svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: Y(0), y2: Y(0), stroke: '#b8978f', opacity: .5}));
+  bar.forEach((b, i) => {
+    const x = pad.l + i * sx + sx * 0.15, w = sx * 0.7, y1 = Y(Math.max(b.bas, b.son)), y2 = Y(Math.min(b.bas, b.son));
+    const renk = b.toplam ? '#f6b73c' : i === 0 ? '#b8978f' : b.v >= 0 ? '#3ee08f' : '#ff5468';
+    svg.append(el('rect', {x, y: y1, width: w, height: Math.max(1.5, y2 - y1), fill: renk, rx: 1.5}));
+    svg.append(el('text', {x: x + w / 2, y: H - 4, fill: '#7c5f58', 'font-size': 9, 'text-anchor': 'middle'}, b.toplam ? 'Σ' : i === 0 ? 'β₀' : i === bar.length - 2 ? '…' : 'f' + i));
+  });
+  ipucuKaydet(svg, {pts: bar.map((b, i) => ({t: i, v: b.son, b})), X: i => pad.l + i * sx + sx / 2, Y, pad, H,
+    tip: q => `<b class="${q.b.v >= 0 ? 'pos' : 'neg'}">${esc(isaret(q.b.v, 4))}</b>${esc(q.b.ad)} · birikmiş ${esc(isaret(q.b.son, 3))}`});
+}
+
+// ---------------------------------------------------------------- katkı tablosu
+function tablo() {
+  const ic = S.veri?.ic; if (!ic) { $('tablo').innerHTML = '<tr><td colspan="6" class="dim">Model iç yapısı bir sonraki gece görevinde gelecek.</td></tr>'; return; }
+  $('t-egitim').textContent = `eğitim ${fmt(ic.egitim_gun, 0)} gün · ${ic.ozellik} gösterge`;
+  const m = Math.max(...ic.katki.map(k => Math.abs(k.katki)), 1e-9);
+  $('tablo').innerHTML = ic.katki.slice(0, 9).map((k, i) => `<tr class="${i === 0 ? 'ust1' : ''}">
+    <td class="ad">${esc(k.ad)}</td><td>${esc(isaret(k.z, 2))}</td><td class="sf">${esc(isaret(k.b, 3))}</td>
+    <td class="${k.katki >= 0 ? 'pos' : 'neg'}"><b>${esc(isaret(k.katki, 4))}</b></td>
+    <td class="${k.katki >= 0 ? 'pos' : 'neg'}">${k.katki >= 0 ? '▲ YUKARI' : '▼ AŞAĞI'}</td>
+    <td><i class="mb" style="width:${(Math.abs(k.katki) / m * 100).toFixed(0)}%;background:${k.katki >= 0 ? 'var(--grn)' : 'var(--red)'}"></i></td></tr>`).join('');
+}
+
+// ---------------------------------------------------------------- kartlar
+function kartlar() {
+  const g = S.veri?.gunler || [], d = degerler(); let h = '';
+  if (d) {
+    const deg = S.fiyat / d.giris - 1;
+    h += `<div class="kart ${d.poz ? 'y' : 'k'}"><span class="rozet ${d.poz ? '' : 'k'}">${d.poz ? 'AÇIK' : 'NAKİT'}</span>
+      <b>XRP-USD · ${d.poz ? 'tutuluyor' : 'dışarıda'}</b><b class="${deg >= 0 ? 'pos' : 'neg'}">${esc(isaret(deg * 100, 2))}%</b>
+      <small>giriş ${esc(fmt(d.giris))} → şimdi ${esc(fmt(S.fiyat))} · ${esc(d.bas || '')} başlangıç</small></div>`;
+  }
+  g.slice(-5).reverse().forEach((k, i) => {
+    const onceki = g[g.length - 2 - i], deg = onceki ? k.kapanis / onceki.kapanis - 1 : null;
+    const [ad, sinif] = k.degisti ? (k.karar === 'NAKIT' ? ['SAT', 'k'] : ['AL', '']) : (k.karar === 'NAKIT' ? ['BEKLE', 'n'] : ['TUT', '']);
+    h += `<div class="kart ${k.degisti ? (sinif === 'k' ? 'k' : 'y') : ''}"><span class="rozet ${sinif}">${ad}</span>
+      <b>Karar · ${esc(tarihK(k.tarih))}</b><span class="${k.olasilik > ESIK ? 'pos' : 'neg'}">p ${esc(fmt(k.olasilik, 3))}</span>
+      <small>kapanış ${esc(fmt(k.kapanis))}${deg == null ? '' : ' (' + esc(isaret(deg * 100, 2)) + '%)'} · model ${esc(usd(k.model))} · tut ${esc(usd(k.tut))}</small></div>`;
+  });
+  $('kartlar').innerHTML = h || '<div class="bos">İlk karar bekleniyor.</div>';
+}
+
+// ---------------------------------------------------------------- mum grafiği
+function mumGrafik() {
+  const svg = $('g-mum'), {W, H} = hazirla(svg), m = S.mum; if (!W || m.length < 2) return;
+  $('m-baslik').textContent = S.aralik === 'günlük' ? 'XRP-USD · günlük mum · canlı kaynak yok, son kapanışlar' : `XRP-USD · ${S.aralik} mum · ${S.kaynak}`;
+  const son = m.at(-1), ilk = m[0], deg = son.c / ilk.o - 1;
+  const gunlukMu = S.aralik === 'günlük';
+  $('m-son').innerHTML = `son <b>${esc(fmt(S.fiyat || son.c))}</b> <span class="${deg >= 0 ? 'pos' : 'neg'}">${esc(isaret(deg * 100, 2))}%</span> · ${gunlukMu ? m.length + ' gün' : '48s'}`;
+  const pad = {l: 4, r: 58, t: 10, b: 20}, d = degerler();
+  let lo = Math.min(...m.map(x => x.l)), hi = Math.max(...m.map(x => x.h)); const pd = (hi - lo) * 0.08; lo -= pd; hi += pd;
+  const O = olcek(W, H, pad, m[0].t, son.t, lo, hi);
+  yEksen(svg, W, pad, O.Y, lo, hi, 4, v => fmt(v, 3));
+  const w = Math.max(1.5, (W - pad.l - pad.r) / m.length * 0.62);
+  for (const x of m) { const up = x.c >= x.o, r = up ? '#3ee08f' : '#ff5468', X = O.X(x.t);
+    svg.append(el('line', {x1: X, x2: X, y1: O.Y(x.h), y2: O.Y(x.l), stroke: r, 'stroke-width': 1}));
+    svg.append(el('rect', {x: X - w / 2, y: O.Y(Math.max(x.o, x.c)), width: w, height: Math.max(1, Math.abs(O.Y(x.o) - O.Y(x.c))), fill: up ? r : '#2a0d0f', stroke: r})); }
+  if (d && d.giris > lo && d.giris < hi) {
+    svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: O.Y(d.giris), y2: O.Y(d.giris), stroke: '#f6b73c', 'stroke-dasharray': '4 4'}));
+    svg.append(el('text', {x: pad.l + 4, y: O.Y(d.giris) - 4, fill: '#f6b73c', 'font-size': 10}, 'GİRİŞ ' + fmt(d.giris)));
+  }
+  const sf = S.fiyat || son.c, ys = O.Y(Math.min(hi, Math.max(lo, sf)));
+  svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: ys, y2: ys, stroke: '#ff6a48', 'stroke-dasharray': '1 3'}));
+  svg.append(el('rect', {x: W - pad.r + 2, y: ys - 9, width: pad.r - 4, height: 18, rx: 3, fill: sf >= ilk.o ? '#3ee08f' : '#ff5468'}));
+  svg.append(el('text', {x: W - pad.r + 6, y: ys + 4, fill: '#120607', 'font-size': 10.5, 'font-weight': 700}, fmt(sf)));
+  [m[0], m[Math.floor(m.length / 2)], son].forEach((x, i) => svg.append(el('text', {x: O.X(x.t), y: H - 5, fill: '#7c5f58', 'font-size': 9.5, 'text-anchor': ['start', 'middle', 'end'][i]},
+    gunlukMu ? new Date(x.t).toLocaleDateString('tr-TR', {day: 'numeric', month: 'short'}) : new Date(x.t).toLocaleString('tr-TR', {weekday: 'short', hour: '2-digit', minute: '2-digit'}))));
+  ipucuKaydet(svg, {pts: m.map(x => ({t: x.t, v: x.c, x})), X: O.X, Y: O.Y, pad, H,
+    tip: q => `<b class="${q.x.c >= q.x.o ? 'pos' : 'neg'}">${esc(fmt(q.x.c))} $</b>${esc(gunlukMu ? new Date(q.x.t).toLocaleDateString('tr-TR', {day: 'numeric', month: 'short', year: 'numeric'}) + ' kapanış' : new Date(q.x.t).toLocaleString('tr-TR', {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}))}<br>açılış ${esc(fmt(q.x.o))} · yüksek ${esc(fmt(q.x.h))} · düşük ${esc(fmt(q.x.l))}`});
+}
+
+// ---------------------------------------------------------------- fiyat + karar bölgeleri
+function bolge() {
+  const svg = $('g-bolge'), {W, H} = hazirla(svg), gp = S.gunluk; if (!W || gp.length < 2) return;
+  const gm = new Map((S.veri?.gecmis || []).map(x => [x.tarih, x.p]));
+  const pts = gp.map(x => ({t: x.t, v: x.v, p: gm.get(new Date(x.t).toISOString().slice(0, 10))}));
+  const pad = {l: 4, r: 48, t: 10, b: 18};
+  let lo = Math.min(...pts.map(x => x.v)), hi = Math.max(...pts.map(x => x.v)); const pd = (hi - lo) * 0.08; lo -= pd; hi += pd;
+  const O = olcek(W, H, pad, pts[0].t, pts.at(-1).t, lo, hi), gun = 864e5;
+  pts.forEach(x => { if (x.p != null && x.p <= ESIK) svg.append(el('rect', {x: O.X(x.t + gun / 2), y: pad.t, width: Math.max(1.5, O.X(x.t + gun) - O.X(x.t)), height: H - pad.t - pad.b, fill: '#ff5468', opacity: .14})); });
+  yEksen(svg, W, pad, O.Y, lo, hi, 3, v => fmt(v, 3));
+  const d = pts.map((x, i) => (i ? 'L' : 'M') + O.X(x.t).toFixed(1) + ' ' + O.Y(x.v).toFixed(1)).join('');
+  svg.append(el('path', {d, fill: 'none', stroke: '#ff6a48', 'stroke-width': 5, opacity: .18}));
+  svg.append(el('path', {d, fill: 'none', stroke: '#ffb08f', 'stroke-width': 1.6}));
+  pts.forEach(x => { if (x.p != null) svg.append(el('circle', {cx: O.X(x.t), cy: O.Y(x.v), r: 1.9, fill: x.p > ESIK ? '#3ee08f' : '#ff5468'})); });
+  [pts[0], pts.at(-1)].forEach((x, i) => svg.append(el('text', {x: O.X(x.t), y: H - 4, fill: '#7c5f58', 'font-size': 9.5, 'text-anchor': i ? 'end' : 'start'}, new Date(x.t).toLocaleDateString('tr-TR', {day: 'numeric', month: 'short'}))));
+  ipucuKaydet(svg, {pts, X: O.X, Y: O.Y, pad, H,
+    tip: q => `<b>${esc(fmt(q.v))} $</b>${esc(new Date(q.t).toLocaleDateString('tr-TR', {day: 'numeric', month: 'short', year: 'numeric'}))}${q.p == null ? '' : `<br><span class="${q.p > ESIK ? 'pos' : 'neg'}">p ${esc(fmt(q.p, 3))} → ${q.p > ESIK ? 'XRP' : 'nakit'}</span>`}`});
+}
+
+// ---------------------------------------------------------------- karar izi
+function iz() {
+  const g = S.veri?.gunler || [], d = degerler(), ic = S.veri?.ic, sat = [], z = new Date().toISOString().slice(11, 19);
+  if (S.fiyat) sat.push([z, S.yedek ? 'fiyat' : 'canlı', S.yedek ? `canlı kaynak yok · ${S.kaynak}: ${fmt(S.fiyat)} $ · dakikada bir yeniden denenir` : `XRP ${fmt(S.fiyat)} $ · kaynak ${S.kaynak}`, S.yedek ? 'amb' : 'acc']);
+  if (S.ozSon) sat.push([z, 'önizleme', `gün şimdi kapansa p ${fmt(S.ozSon.p, 3)} → ${S.ozSon.p > ESIK ? "XRP'de kal" : 'nakite geç'} (resmi değil)`, 'amb']);
+  if (d) sat.push([z, 'değer', `model ${usd(d.m)} · tut ${usd(d.t)} · fark ${isaret(d.m - d.t, 2)} $`, 'pos']);
+  if (ic) sat.push([ic.tarih.slice(5), 'model', `logit ${isaret(logitOf(ic), 3)} → p↑ ${fmt(ic.p, 3)}`, 'amb']);
+  if (ic) sat.push([ic.tarih.slice(5), 'eğitim', `${fmt(ic.egitim_gun, 0)} gün · ${ic.ozellik} gösterge · lojistik C=0,05`, 'sf']);
+  g.slice(-6).reverse().forEach(k => sat.push([k.tarih.slice(5), k.degisti ? 'geçiş' : 'karar',
+    `p ${fmt(k.olasilik, 3)} ${k.olasilik > ESIK ? '>' : '≤'} 0,47 → ${k.karar === 'NAKIT' ? 'nakitte kal' : "XRP'de kal"} · kapanış ${fmt(k.kapanis)}`, k.degisti ? 'acc' : (k.karar === 'NAKIT' ? 'neg' : 'pos')]));
+  if (S.veri) sat.push([S.veri.guncelleme.slice(11, 16), 'veri', 'gece görevi verisi yüklendi', 'dim']);
+  $('iz').innerHTML = sat.map(([a, b, c, r]) => `<span class="z">${esc(a)}</span><span class="t ${r}">${esc(b)}</span><span>${esc(c)}</span>`).join('');
+}
+
+// ---------------------------------------------------------------- model vs tut
+function modelTut() {
+  const svg = $('g-mt'), {W, H} = hazirla(svg), g = S.veri?.gunler || [], d = degerler();
+  const pts = g.map(k => ({t: Date.parse(k.tarih + 'T00:00:00Z') + 864e5, m: k.model, u: k.tut}));
+  if (d) { pts.push({t: Date.now(), m: d.m, u: d.t, canli: true}); const f = d.m - d.t; $('mt-net').innerHTML = `net fark <b class="${f >= 0 ? 'pos' : 'neg'}">${esc(isaret(f, 2))} $</b>`; }
+  if (!W) return;
+  if (pts.length < 2) { svg.append(el('text', {x: W / 2, y: H / 2, fill: '#7c5f58', 'text-anchor': 'middle', 'font-size': 11}, 'Birkaç gün sonra eğri oluşacak')); return; }
+  const pad = {l: 4, r: 52, t: 12, b: 18}, vs = pts.flatMap(p => [p.m, p.u]);
+  let lo = Math.min(...vs, 100), hi = Math.max(...vs, 100); const pd = (hi - lo) * 0.15 || 0.5; lo -= pd; hi += pd;
+  const O = olcek(W, H, pad, pts[0].t, pts.at(-1).t, lo, hi);
+  yEksen(svg, W, pad, O.Y, lo, hi, 3, v => fmt(v, 1));
+  svg.append(el('line', {x1: pad.l, x2: W - pad.r, y1: O.Y(100), y2: O.Y(100), stroke: '#f6b73c', 'stroke-dasharray': '4 4', opacity: .6}));
+  const yol = k => pts.map((p, i) => (i ? 'L' : 'M') + O.X(p.t).toFixed(1) + ' ' + O.Y(p[k]).toFixed(1)).join('');
+  svg.append(el('path', {d: yol('u'), fill: 'none', stroke: '#b8978f', 'stroke-width': 1.5, 'stroke-dasharray': '5 3'}));
+  svg.append(el('path', {d: yol('m'), fill: 'none', stroke: '#3ee08f', 'stroke-width': 2.2, style: 'filter:drop-shadow(0 0 4px #3ee08f88)'}));
+  const s = pts.at(-1); svg.append(el('circle', {cx: O.X(s.t), cy: O.Y(s.m), r: 4, fill: '#3ee08f'}));
+  svg.append(el('text', {x: pad.l + 4, y: pad.t + 10, fill: '#3ee08f', 'font-size': 10}, '— model'));
+  svg.append(el('text', {x: pad.l + 70, y: pad.t + 10, fill: '#b8978f', 'font-size': 10}, '- - sadece tut'));
+  ipucuKaydet(svg, {pts: pts.map(p => ({t: p.t, v: p.m, p})), X: O.X, Y: O.Y, pad, H,
+    tip: q => `<b class="pos">model ${esc(usd(q.p.m))}</b>tut ${esc(usd(q.p.u))} · ${q.p.canli ? 'şimdi' : esc(new Date(q.p.t - 864e5).toLocaleDateString('tr-TR', {day: 'numeric', month: 'short'}))}`});
+}
+
+// ---------------------------------------------------------------- akış
+function hepsi() {
+  for (const f of [onizleme, ozGrafik, ust, cuzdan, osilator, isiHaritasi, halka, selale, tablo, kartlar, mumGrafik, bolge, iz, modelTut]) {
+    try { f(); } catch (e) { console.error(f.name, e); }
+  }
+  $('guncel').textContent = S.veri ? 'Model verisi: ' + new Date(S.veri.guncelleme).toLocaleString('tr-TR') + ' · canlı fiyat: ' + (S.kaynak || '—') : 'Model verisi yüklenemedi.';
+  $('c-durum').textContent = S.yedek ? 'SON KAPANIŞ' : S.fiyat ? 'CANLI' : 'BEKLİYOR';
+  $('c-durum').style.cssText = S.yedek ? 'border-color:var(--amb);color:var(--amb)!important' : '';
+}
+async function fiyatYenile() {
+  try {
+    const a = await anlik();
+    S.fiyat = a.fiyat; S.yuzde = a.yuzde; S.kaynak = a.kaynak; S.yedek = false; S.btc = a.btc || null; S.eth = a.eth || null;
+    if (a.mum?.length) { S.mum = a.mum; S.mumZaman = Date.now(); S.aralik = a.aralik; }
+    else if (S.aralik === 'günlük') { S.mum = []; S.aralik = ''; }
+  } catch (e) { S.btc = S.eth = null; if (!yedekKullan()) S.kaynak = 'bağlantı yok'; }
+  ozHesapla();
+  hepsi();
+}
+async function basla() {
+  saat(); setInterval(saat, 1000);
+  await veriYukle();
+  try { S.gunluk = await gunlukSeri(); } catch (e) { S.gunluk = kapanislar(); }
+  await fiyatYenile();
+  setInterval(fiyatYenile, ['Kraken', 'Binance'].includes(S.kaynak) ? 30000 : 60000);
+  setInterval(async () => { await veriYukle(); ozHesapla(); try { S.gunluk = await gunlukSeri(); } catch (e) { if (!S.gunluk.length) S.gunluk = kapanislar(); } hepsi(); }, 600000);
+}
+let bekle; new ResizeObserver(() => { clearTimeout(bekle); bekle = setTimeout(hepsi, 120); }).observe(document.body);
+basla();
+}
+</script>
+</body>
+</html>
